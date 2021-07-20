@@ -1,0 +1,11 @@
+.Yahtzee {
+  text-align: center;
+  background-color: #282c34;
+  color: white;
+  height: 100%;
+  padding: 10px;
+}
+
+h1 {
+  font-size: calc(10px + 2min);
+}
