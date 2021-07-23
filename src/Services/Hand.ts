@@ -1,33 +1,46 @@
 import { Die } from "./Die";
 
+class TooManyDiceForHandError extends Error {
+
+}
+
 export class Hand {
     private readonly maxDice: number = 5;
     private dice: Die[] = [];
 
-    constructor() {
-        this.setup();
+    constructor(dice?: Die[]) {
+        this.setup(dice);
     }
 
-    private setup() {
+    private setup(dice?: Die[]) {
+        if (!!dice && dice.length > this.maxDice) {
+            throw new TooManyDiceForHandError()
+        }
+
+        if (!!dice) {
+            this.dice = dice;
+            return;
+        }
+        
         for (let i = 0; i < this.maxDice; i++) {
-            this.dice[i] = new Die();
+            this.dice[i] = new Die()
         }
     }
 
-    rollDice(diceToRoll?: number[]) {
-        if (!diceToRoll || !diceToRoll.some(() => true)) {
-            diceToRoll = [];
+    rollDice(diceIndiciesToRoll?: number[]) {
+        if (!diceIndiciesToRoll || !diceIndiciesToRoll.some(() => true)) {
+            diceIndiciesToRoll = [];
             for (let i = 0; i < this.maxDice; i++) {
-                diceToRoll.push(i);
+                diceIndiciesToRoll.push(i);
             }
         }
 
-        for (let i = 0; i < this.maxDice; i++) {
-            this.dice[i].roll();
+        for (let index of diceIndiciesToRoll) {
+            this.dice[index].roll();
         }
     }
 
-    getDiceValues(): number[] {
-        return this.dice.map(die => die.getCurrentFace());
+    getDice(): Die[] {
+        return this.dice;
     }
 }

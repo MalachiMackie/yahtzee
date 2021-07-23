@@ -1,6 +1,9 @@
 import { BehaviorSubject, map, Observable } from "rxjs";
+import { Die } from "./Die";
 import { Player } from "./Player";
+import { Rule, RuleScore } from "./Rule";
 import { RuleSet } from "./RuleSet";
+import { RoundOutcome } from "./Scoreboard";
 
 class DiceNotRolledError extends Error
 {
@@ -24,11 +27,15 @@ class GameService {
     rollCount: Observable<number> = this.rollCountSubject.asObservable();
     hasAnotherRoll: Observable<boolean> = this.rollCountSubject.pipe(map(rollCount => rollCount < this.maxRolls))
 
-    private diceSubject: BehaviorSubject<number[]> = new BehaviorSubject<number[]>([]);
-    dice: Observable<number[]> = this.diceSubject.asObservable();
+    private diceSubject: BehaviorSubject<Die[]> = new BehaviorSubject<Die[]>([]);
+    dice: Observable<Die[]> = this.diceSubject.asObservable();
 
-    private availableRulesSubject: BehaviorSubject<[number, string, number][]> = new BehaviorSubject<[number, string, number][]>([]);
-    availableRules: Observable<[number, string, number][]> = this.availableRulesSubject.asObservable();
+    private availableRulesSubject = new BehaviorSubject<[Rule, RuleScore][]>([]);
+    availableRules: Observable<[Rule, RuleScore][]> = this.availableRulesSubject.asObservable();
+
+    private roundOutcomesSubject = new BehaviorSubject<RoundOutcome[]>([]);
+    roundOutcomes: Observable<RoundOutcome[]> = this.roundOutcomesSubject.asObservable();
+
 
     startGame(names: string[]): void {
         names.forEach(name => {
@@ -44,30 +51,32 @@ class GameService {
 
     }
 
-    rollDice(diceToRoll: number[] = []) {
+    rollDice(diceIndiciesToRoll: number[] = []) {
         if (this.rollCountSubject.value >= this.maxRolls) {
             throw new TooManyRollsError();
         }
         
         const player = this.currentPlayer();
         this.rollCountSubject.next(this.rollCountSubject.value + 1);
-        player.rollDice(diceToRoll);
+        player.rollDice(diceIndiciesToRoll);
 
         const hand = player.getCurrentHand();
 
-        this.diceSubject.next(hand.getDiceValues());
-        const availableRules: [number, string, number][] = player.getAvailableRules().map(rule => [rule.key, rule.name, rule.getScore(hand)]);
+        this.diceSubject.next(hand.getDice());
+        const availableRules: [Rule, RuleScore][] = player.getAvailableRules().map(rule => [rule, rule.getScore(hand)]);
         this.availableRulesSubject.next(availableRules);
     }
 
-    keepDice(ruleKey: number) {
+    keepDice(rule: Rule) {
         if (this.rollCountSubject.value === 0) {
             throw new DiceNotRolledError()
         }
 
         const player = this.currentPlayer();
-        player.keepDice(ruleKey);
+        player.keepDice(rule);
         this.nextPlayer();
+
+        this.roundOutcomesSubject.next(player.getRoundOutcomes());
     }
 
     quitGame() {

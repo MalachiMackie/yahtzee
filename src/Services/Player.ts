@@ -1,7 +1,7 @@
 import { Hand } from "./Hand";
 import { Rule } from "./Rule";
 import { RuleSet } from "./RuleSet";
-import { Scoreboard } from "./Scoreboard";
+import { RoundOutcome, Scoreboard } from "./Scoreboard";
 
 class PlayerNotInitializedError extends Error {
 
@@ -22,20 +22,20 @@ export class Player {
         this.scoreboard = new Scoreboard(new RuleSet());
     }
 
-    rollDice(diceToRoll: number[]): void {
+    rollDice(diceIndiciesToRoll: number[]): void {
         if (!this.currentHand) {
             throw new PlayerNotInitializedError();
         }
-        this.currentHand.rollDice(diceToRoll);
+        this.currentHand.rollDice(diceIndiciesToRoll);
     }
 
 
-    keepDice(ruleKey: number): void {
+    keepDice(rule: Rule): void {
         if (!this.scoreboard || !this.currentHand) {
             throw new PlayerNotInitializedError();
         }
 
-        this.scoreboard.keepHand(this.currentHand, ruleKey);
+        this.scoreboard.keepHand(this.currentHand, rule);
         this.currentHand = new Hand();
     }
 
@@ -52,6 +52,14 @@ export class Player {
             throw new PlayerNotInitializedError();
         }
 
-        return this.scoreboard.getAvailableRules().filter(rule => rule.isApplicableToHand(this.currentHand!));
+        return this.scoreboard.getAvailableRules();
+    }
+
+    getRoundOutcomes(): RoundOutcome[] {
+        if (!this.scoreboard || !this.currentHand) {
+            throw new PlayerNotInitializedError();
+        }
+
+        return this.scoreboard.getRoundOutcomes();
     }
 }

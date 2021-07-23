@@ -44,7 +44,7 @@ class Game extends React.Component<GameProps, GameState>
         this.setState({
             name: this.state.name,
             status: GameStatus.Finished
-        })
+        }, () => this.props.gameQuit());
         this.props.gameQuit();
     }
 

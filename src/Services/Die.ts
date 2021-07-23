@@ -1,7 +1,19 @@
+class DieFaceNotExpectedValueError extends Error {
+
+}
+
 export class Die {
     static readonly faces: number[] = [1, 2, 3, 4, 5, 6];
 
-    private currentFace: number = Die.faces[0];
+    private currentFace: number;
+
+    constructor(face?: number) {
+        if (!!face && Die.faces.every(dieFace => dieFace != face)) {
+            throw new DieFaceNotExpectedValueError();
+        }
+
+        this.currentFace = face ?? Die.faces[0];
+    }
 
     private getRandomFace(): number {
         const randomNumber = Math.random();
