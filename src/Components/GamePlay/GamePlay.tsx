@@ -1,6 +1,11 @@
 import React from "react";
+import { Die } from "../../Services/Die";
 import GameService from '../../Services/GameService';
-import Die from "../Die/Die";
+import { Rule, RuleScore } from "../../Services/Rule";
+import { RoundOutcome, Scoreboard } from "../../Services/Scoreboard";
+import DiceSelection from "../DiceSelection/DiceSelection";
+import RuleSelection from "../RuleSelection/RuleSelection";
+import ScoreboardComponent from "../ScoreboardComponent/ScoreboardComponent";
 
 interface GamePlayProps {
     name: string
@@ -9,9 +14,11 @@ interface GamePlayProps {
 interface GamePlayState {
     rollCount: number;
     hasAnotherRoll: boolean;
-    dice: number[];
-    availableRules: [number, string, number][];
-    selectedDice: {[dieKey: number]: boolean};
+    dice: Die[];
+    selectedRule?: Rule;
+    availableRules: [Rule, RuleScore][];
+    selectedDiceIndicies: number[];
+    roundOutcomes: RoundOutcome[];
 }
 
 class GamePlay extends React.Component<GamePlayProps, GamePlayState> {
@@ -25,8 +32,9 @@ class GamePlay extends React.Component<GamePlayProps, GamePlayState> {
             rollCount: 0,
             hasAnotherRoll: true,
             dice: [],
+            selectedDiceIndicies: [],
             availableRules: [],
-            selectedDice: {}
+            roundOutcomes: []
         };
 
         this.gameService.rollCount.subscribe(rollCount => {
@@ -53,50 +61,77 @@ class GamePlay extends React.Component<GamePlayProps, GamePlayState> {
             });
         });
 
+        this.gameService.roundOutcomes.subscribe(roundOutcomes => {
+            this.setState({
+                roundOutcomes: roundOutcomes
+            });
+        });
+
         this.gameService.startGame([this.props.name]);
     }
 
     rollDice() {
-        let diceToRoll: number[] = [];
-        const indexes: number[] = Object.keys(this.state.selectedDice).map(index => parseInt(index));
-        const selectedIndexes = indexes.filter(index => this.state.selectedDice[index]);
-
-        for(let index of selectedIndexes) {
-            diceToRoll.push(index);
-        }
-        this.gameService.rollDice(diceToRoll);
+        this.gameService.rollDice(this.state.selectedDiceIndicies);
     }
 
     keepDice() {
-        this.gameService.keepDice(this.state.availableRules[0][0]);
+        if (!this.state.selectedRule) {
+            throw new Error('No rule is selected');
+        }
+        this.gameService.keepDice(this.state.selectedRule);
+        this.setState({
+            selectedDiceIndicies: [],
+            selectedRule: undefined
+        })
     }
 
-    onDieSelectionChanged(index: number, value: boolean) {
+    onDiceSelectionChanged(indicies: number[]) {
         this.setState({
-            selectedDice: {
-                ...this.state.selectedDice,
-                [index]: value
-            }
+            selectedDiceIndicies: indicies
+        });
+    }
+
+    onSelectedRuleChanged(rule?: Rule) {
+        this.setState({
+            selectedRule: rule
         });
     }
 
     render() {
-        const keepDiceButton = this.state.rollCount > 0 ? <button onClick={() => this.keepDice()}>Keep Dice</button> : null;
+        const diceSelection = this.state.rollCount > 0
+            ? (
+                <div>
+                    <p>Your Dice:</p>
+                    <DiceSelection onDiceSelectionChanged={selectedIndicies => this.onDiceSelectionChanged(selectedIndicies)}
+                        canSelectDice={this.state.hasAnotherRoll}
+                        dice={this.state.dice} />
+                </div>
+            )
+            : null;
+
+        const keepDiceButton = this.state.rollCount > 0 && this.state.selectedRule
+            ? <button onClick={() => this.keepDice()}>Keep Dice</button>
+            : null;
         const rollButton = this.state.hasAnotherRoll ? <button onClick={() => this.rollDice()}>Roll</button> : null;
+
+        const scoreboard = !!this.state.roundOutcomes ? 
+            (
+                <div>
+                    <p>Round Outcomes:</p>
+                    <ScoreboardComponent roundOutcomes={this.state.roundOutcomes} />
+                </div>
+            )
+            : null;
 
         return (
             <div>
                 <p>Roll Count: {this.state.rollCount}</p>
-                <p>Your Dice:</p> {
-                    this.state.dice.length > 0
-                        ? this.state.dice.map((die, index) => <Die value={die} onSelectionChanged={(value) => this.onDieSelectionChanged(index, value)}></Die>)
-                        : "Please Roll"
-                }
+                {diceSelection}
                 {keepDiceButton}
                 {rollButton}
-                <ul>
-                    {this.state.availableRules.map(([key, name, score]) => <li key={key}>{name}: {score}</li>)}
-                </ul>
+                <RuleSelection onSelectedRuleChanged={selectedRule => this.onSelectedRuleChanged(selectedRule)}
+                    rules={this.state.availableRules}/>
+                {scoreboard}
             </div>
         )
     }

@@ -2,15 +2,13 @@ import { Hand } from "./Hand";
 import { RuleSet } from "./RuleSet";
 import { Rule, RuleSection } from "./Rule";
 
-interface RoundOutcome {
+export interface RoundOutcome {
     rule: Rule,
     hand: Hand
 }
 
-class RuleNotFoundError extends Error {}
-
 export class Scoreboard {
-    roundOutcomes: RoundOutcome[];
+    private roundOutcomes: RoundOutcome[];
     readonly rules: Rule[];
 
     constructor(ruleSet: RuleSet) {
@@ -45,13 +43,18 @@ export class Scoreboard {
         return this.roundOutcomes.every(outcome => outcome.rule.key !== rule.key);
     }
 
+    getRoundOutcomes(): RoundOutcome[] {
+        return this.roundOutcomes;
+    }
 
-    keepHand(hand: Hand, ruleKey: number): void {
-        const rule = this.rules.find(rule => rule.key === ruleKey);
-        if (!rule) {
-            throw new RuleNotFoundError();
-        }
+    isYahtzeeBonusAvailable(hand: Hand): boolean {
+        const yahtzeeRule = this.rules.find(rule => rule.name.match(/[Yy]ahtzee/))!;
+        return this.roundOutcomes.some(outcome => outcome.rule.key === yahtzeeRule.key)
+            && yahtzeeRule.isApplicableToHand(hand);
+    }
 
+
+    keepHand(hand: Hand, rule: Rule): void {
         this.roundOutcomes.push({ rule: rule, hand: hand });
     }
 }

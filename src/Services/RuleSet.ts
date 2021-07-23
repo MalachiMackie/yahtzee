@@ -3,19 +3,20 @@ import { Hand } from "./Hand";
 import { RuleScoreFunction, RuleApplicableFunction, RuleSection, Rule } from "./Rule";
 
 export class RuleSet {
-    getDiceWithValues(hand: Hand, values: number[]): number[] {
-        return hand.getDiceValues().filter(diceValue => values.some(value => value === diceValue));
+    getDiceWithValues(hand: Hand, values: number[]): Die[] {
+        return hand.getDice().filter(die => values.some(value => value === die.getCurrentFace()));
     }
 
     sumHandWithValues(hand: Hand, values: number[]): number {
-        const foundValues = this.getDiceWithValues(hand, values);
-        return foundValues.reduce((a, b) => a + b, 0);
+        const foundDie = this.getDiceWithValues(hand, values);
+        return foundDie.map(die => die.getCurrentFace()).reduce((a, b) => a + b, 0);
     }
 
     getCountMapOfValues(hand: Hand): { [value: number]: number; } {
-        const values = hand.getDiceValues();
+        const dice = hand.getDice();
         const countMap: { [value: number]: number; } = {};
-        values.forEach(value => {
+        dice.forEach(die => {
+            const value = die.getCurrentFace();
             let map: number = countMap[value];
             if (!map) {
                 map = 0;
@@ -36,26 +37,24 @@ export class RuleSet {
     }
 
     getNumberOfConsecutiveValues(hand: Hand): number {
-        const handValues = hand.getDiceValues();
+        const handValues = hand.getDice().map(die => die.getCurrentFace()).sort();
         let consecutiveValues = 1;
         let largestConsecutiveValues = consecutiveValues;
         let lastValue = handValues[0];
 
-        for (let value of handValues.slice(1).sort()) {
+        for (let value of handValues.slice(1)) {
             if (value === lastValue + 1) {
                 consecutiveValues++;
             }
-            else {
-                if (consecutiveValues > largestConsecutiveValues) {
-                    largestConsecutiveValues = consecutiveValues;
-                }
+            else if (value !== lastValue) {
+                largestConsecutiveValues = Math.max(largestConsecutiveValues, consecutiveValues);
                 consecutiveValues = 1;
             }
 
             lastValue = value;
         }
 
-        return largestConsecutiveValues;
+        return Math.max(largestConsecutiveValues, consecutiveValues);
     }
 
     getRules(): Rule[] {
@@ -82,7 +81,8 @@ export class RuleSet {
         this.createRule('Small Straight', RuleSection.Lower, () => 30, (hand) => this.getNumberOfConsecutiveValues(hand) >= 4);
         this.createRule('Large Straight', RuleSection.Lower, () => 40, (hand) => this.getNumberOfConsecutiveValues(hand) >= 5);
         this.createRule('Chance', RuleSection.Lower, (hand) => this.sumHandWithValues(hand, Die.faces));
-        this.createRule('Yahtzee!', RuleSection.Lower, () => 50, (hand) => !!this.getValueOfHandThatHasCount(hand, count => count === 5));
+        const yahtzeeRule: RuleApplicableFunction = (hand) => !!this.getValueOfHandThatHasCount(hand, count => count === 5);
+        this.createRule('Yahtzee!', RuleSection.Lower, () => 50, yahtzeeRule);
 
         return this.rules;
     }
@@ -92,7 +92,7 @@ export class RuleSet {
     }
 
     private createRule(name: string, section: RuleSection, scoreFunction: RuleScoreFunction, isApplicableToHand: RuleApplicableFunction = () => true): void {
-        this.rules.push(new Rule(this.rules.length - 1, name, section, scoreFunction, isApplicableToHand));
+        this.rules.push(new Rule(this.rules.length, name, section, scoreFunction, isApplicableToHand));
     }
 
     private rules: Rule[] = [];
