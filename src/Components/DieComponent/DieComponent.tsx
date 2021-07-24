@@ -1,4 +1,5 @@
-import React, { ChangeEvent } from "react";
+import './DieComponent.css'
+import React from "react";
 
 interface DieComponentProps {
     value: number;
@@ -6,27 +7,48 @@ interface DieComponentProps {
     onSelectionChanged: (selection: boolean) => void;
 }
 
-class DieComponent extends React.Component<DieComponentProps>
+interface DieComponentState {
+    selected: boolean
+}
+
+class DieComponent extends React.Component<DieComponentProps, DieComponentState>
 {
 
     constructor(props: DieComponentProps) {
         super(props);
+
+        this.state = {selected: false};
 
         this.onSelectionChanged = props.onSelectionChanged;
     }
 
     onSelectionChanged: (selection: boolean) => void;
 
-    onCheckboxValueChanged(event: ChangeEvent<HTMLInputElement>) {
-        this.onSelectionChanged(event.target.checked);
+    toggleDie() {
+        if (!this.props.canSelectDie)
+            return;
+
+        this.setState({
+            selected: !this.state.selected
+        }, () => this.onSelectionChanged(this.state.selected));
+    }
+
+    componentDidUpdate(prevProps: DieComponentProps) {
+        if (prevProps.canSelectDie !== this.props.canSelectDie) {
+            this.setState({
+                selected: false
+            });
+        }
     }
 
     render() {
-        const checkbox = this.props.canSelectDie ? <input type="checkbox" onChange={(event) => this.onCheckboxValueChanged(event)} /> : null;
+        // const checkbox = this.props.canSelectDie ? <input type="checkbox" onChange={(event) => this.onCheckboxValueChanged(event)} /> : null;
         return (
-            <div>
-                {this.props.value}
-                {checkbox}
+            <div className="DieRoot">
+                <div className={`Die ${this.state.selected ? 'Selected' : 'Not-Selected'}`} onClick={() => this.toggleDie()}>
+                    {this.props.value}
+                </div>
+                {/* {checkbox} */}
             </div>
         )
     }

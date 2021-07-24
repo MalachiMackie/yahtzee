@@ -1,4 +1,4 @@
-import { Hand } from "./Hand";
+import Hand from "./Hand";
 
 export type RuleScore = number;
 export type RuleScoreFunction = (hand: Hand) => RuleScore;
@@ -9,7 +9,7 @@ export enum RuleSection {
     Lower
 }
 
-export class Rule {
+export default class Rule {
     readonly key: number;
     readonly name: string;
     readonly section: RuleSection;

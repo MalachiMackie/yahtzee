@@ -1,15 +1,15 @@
-import { Hand } from "./Hand";
+import Hand from "./Hand";
 import { RuleSet } from "./RuleSet";
-import { Rule, RuleSection } from "./Rule";
+import Rule, { RuleSection } from "./Rule";
 
 export interface RoundOutcome {
     rule: Rule,
     hand: Hand
 }
 
-export class Scoreboard {
+export default class Scoreboard {
     private roundOutcomes: RoundOutcome[];
-    readonly rules: Rule[];
+    private readonly rules: Rule[];
 
     constructor(ruleSet: RuleSet) {
         this.roundOutcomes = [];

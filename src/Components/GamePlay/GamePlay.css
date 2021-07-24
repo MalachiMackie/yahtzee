@@ -1,0 +1,35 @@
+div.Scoreboard {
+    width: auto;
+    float: right;
+    width: 25%;
+    max-width: 300px;
+    min-width: 200px;
+}
+
+div.Scoreboard > div.RollCount {
+    margin: 5px;
+    text-align: left;
+}
+
+div.Buttons {
+    position: absolute;
+    left: 50%;
+    width: 200px;
+    margin: auto;
+    transform: translateX(-50%);
+}
+
+div.Buttons > button {
+    display: block;
+    margin: 15px auto;
+    width: 125px;
+}
+
+div.Dice {
+    width: auto;
+    margin: auto;
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translateX(-50%)
+}

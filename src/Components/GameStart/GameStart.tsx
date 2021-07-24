@@ -1,3 +1,4 @@
+import './GameStart.css'
 import React, { ChangeEvent, FormEvent } from "react";
 
 interface GameStartProps {
@@ -36,7 +37,7 @@ class GameStart extends React.Component<GameStartProps, GameStartState> {
 
     render() {
         return (
-            <form onSubmit={(event) => this.onSubmit(event)}>
+            <form className='StartForm' onSubmit={(event) => this.onSubmit(event)}>
                 <input type='text' value={this.state.name} onChange={evnt => this.onNameChanged(evnt)}/>
                 <button type='submit'>Start Game</button>
             </form>

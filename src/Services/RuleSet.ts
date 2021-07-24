@@ -1,6 +1,6 @@
 import { Die } from "./Die";
-import { Hand } from "./Hand";
-import { RuleScoreFunction, RuleApplicableFunction, RuleSection, Rule } from "./Rule";
+import Hand from "./Hand";
+import Rule, { RuleScoreFunction, RuleApplicableFunction, RuleSection } from "./Rule";
 
 export class RuleSet {
     getDiceWithValues(hand: Hand, values: number[]): Die[] {

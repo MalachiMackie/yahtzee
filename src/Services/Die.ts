@@ -8,7 +8,7 @@ export class Die {
     private currentFace: number;
 
     constructor(face?: number) {
-        if (!!face && Die.faces.every(dieFace => dieFace != face)) {
+        if (!!face && Die.faces.every(dieFace => dieFace !== face)) {
             throw new DieFaceNotExpectedValueError();
         }
 

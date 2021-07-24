@@ -1,9 +1,9 @@
-import { BehaviorSubject, map, Observable } from "rxjs";
-import { Die } from "./Die";
+import { BehaviorSubject, map } from "rxjs";
+import Hand from "./Hand";
 import { Player } from "./Player";
-import { Rule, RuleScore } from "./Rule";
+import Rule from "./Rule";
 import { RuleSet } from "./RuleSet";
-import { RoundOutcome } from "./Scoreboard";
+import Scoreboard from "./Scoreboard";
 
 class DiceNotRolledError extends Error
 {
@@ -23,19 +23,15 @@ class GameService {
     private turnsElapsed: number = 0;
     private playersTurn: number = 0;
 
-    private rollCountSubject: BehaviorSubject<number> = new BehaviorSubject(0);
-    rollCount: Observable<number> = this.rollCountSubject.asObservable();
-    hasAnotherRoll: Observable<boolean> = this.rollCountSubject.pipe(map(rollCount => rollCount < this.maxRolls))
+    private rollCountSubject = new BehaviorSubject(0);
+    rollCount = this.rollCountSubject.asObservable();
+    hasAnotherRoll = this.rollCountSubject.pipe(map(rollCount => rollCount < this.maxRolls))
 
-    private diceSubject: BehaviorSubject<Die[]> = new BehaviorSubject<Die[]>([]);
-    dice: Observable<Die[]> = this.diceSubject.asObservable();
+    private scoreboardSubject = new BehaviorSubject<Scoreboard | undefined>(undefined);
+    scoreboard = this.scoreboardSubject.asObservable();
 
-    private availableRulesSubject = new BehaviorSubject<[Rule, RuleScore][]>([]);
-    availableRules: Observable<[Rule, RuleScore][]> = this.availableRulesSubject.asObservable();
-
-    private roundOutcomesSubject = new BehaviorSubject<RoundOutcome[]>([]);
-    roundOutcomes: Observable<RoundOutcome[]> = this.roundOutcomesSubject.asObservable();
-
+    private currentHandSubject = new BehaviorSubject<Hand | undefined>(undefined);
+    currentHand = this.currentHandSubject.asObservable();
 
     startGame(names: string[]): void {
         names.forEach(name => {
@@ -44,7 +40,12 @@ class GameService {
 
         this.playersTurn = 0;
         this.turnsElapsed = 0;
+
+        const player = this.getCurrentPlayer();
+
         this.rollCountSubject.next(0);
+        this.scoreboardSubject.next(player.getScoreboard());
+        this.currentHandSubject.next(player.getCurrentHand());
     }
 
     finishGame(): void {
@@ -56,15 +57,13 @@ class GameService {
             throw new TooManyRollsError();
         }
         
-        const player = this.currentPlayer();
+        const player = this.getCurrentPlayer();
         this.rollCountSubject.next(this.rollCountSubject.value + 1);
         player.rollDice(diceIndiciesToRoll);
 
         const hand = player.getCurrentHand();
-
-        this.diceSubject.next(hand.getDice());
-        const availableRules: [Rule, RuleScore][] = player.getAvailableRules().map(rule => [rule, rule.getScore(hand)]);
-        this.availableRulesSubject.next(availableRules);
+        this.currentHandSubject.next(hand);
+        this.scoreboardSubject.next(player.getScoreboard());
     }
 
     keepDice(rule: Rule) {
@@ -72,11 +71,11 @@ class GameService {
             throw new DiceNotRolledError()
         }
 
-        const player = this.currentPlayer();
+        const player = this.getCurrentPlayer();
         player.keepDice(rule);
         this.nextPlayer();
-
-        this.roundOutcomesSubject.next(player.getRoundOutcomes());
+        this.currentHandSubject.next(player.getCurrentHand());
+        this.scoreboardSubject.next(player.getScoreboard());
     }
 
     quitGame() {
@@ -86,7 +85,7 @@ class GameService {
         this.rollCountSubject.next(0);
     }
 
-    private currentPlayer(): Player {
+    private getCurrentPlayer(): Player {
         return this.players[this.playersTurn];
     }
 
@@ -96,9 +95,11 @@ class GameService {
             this.nextTurn();
         }
 
+        const player = this.getCurrentPlayer();
+
         this.rollCountSubject.next(0);
-        this.diceSubject.next([]);
-        this.availableRulesSubject.next([]);
+        this.currentHandSubject.next(player.getCurrentHand());
+        this.scoreboardSubject.next(player.getScoreboard());
     }
 
     private nextTurn(): void {

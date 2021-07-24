@@ -1,6 +1,5 @@
 import React, { ReactElement } from 'react';
 import GamePlay from '../GamePlay/GamePlay';
-import GameStart from '../GameStart/GameStart';
 
 interface GameProps {
     gameQuit: () => void,
@@ -24,7 +23,7 @@ class Game extends React.Component<GameProps, GameState>
         super(props);
 
         this.state = {
-            name: '',
+            name: 'Charlie',
             status: GameStatus.NotStarted
         };
     }
@@ -45,16 +44,15 @@ class Game extends React.Component<GameProps, GameState>
             name: this.state.name,
             status: GameStatus.Finished
         }, () => this.props.gameQuit());
-        this.props.gameQuit();
     }
 
     render() {
         let gameComponent: ReactElement;
 
         switch (this.state.status) {
+                // gameComponent = <GameStart defaultName='Charlie' onStarted={name => this.startGame(name)} />
+                // break;
             case GameStatus.NotStarted:
-                gameComponent = <GameStart defaultName='Charlie' onStarted={name => this.startGame(name)} />
-                break;
             case GameStatus.InProgress:
                 gameComponent = <GamePlay name={this.state.name} />
                 break;
@@ -65,11 +63,7 @@ class Game extends React.Component<GameProps, GameState>
         }
 
         return (
-        <div>
-            {
-                gameComponent
-            }
-        </div>
+            <div>{gameComponent}</div>
         )
     }
 }

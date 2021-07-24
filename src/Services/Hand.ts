@@ -4,7 +4,7 @@ class TooManyDiceForHandError extends Error {
 
 }
 
-export class Hand {
+export default class Hand {
     private readonly maxDice: number = 5;
     private dice: Die[] = [];
 

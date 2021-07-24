@@ -1,11 +1,11 @@
-import React from "react";
-import { Die } from "../../Services/Die";
+import './GamePlay.css'
+import React, { FormEvent } from "react";
 import GameService from '../../Services/GameService';
-import { Rule, RuleScore } from "../../Services/Rule";
-import { RoundOutcome, Scoreboard } from "../../Services/Scoreboard";
+import Rule from "../../Services/Rule";
+import Scoreboard from "../../Services/Scoreboard";
 import DiceSelection from "../DiceSelection/DiceSelection";
-import RuleSelection from "../RuleSelection/RuleSelection";
 import ScoreboardComponent from "../ScoreboardComponent/ScoreboardComponent";
+import Hand from '../../Services/Hand';
 
 interface GamePlayProps {
     name: string
@@ -14,14 +14,13 @@ interface GamePlayProps {
 interface GamePlayState {
     rollCount: number;
     hasAnotherRoll: boolean;
-    dice: Die[];
     selectedRule?: Rule;
-    availableRules: [Rule, RuleScore][];
     selectedDiceIndicies: number[];
-    roundOutcomes: RoundOutcome[];
+    scoreboard?: Scoreboard;
+    currentHand?: Hand;
 }
 
-class GamePlay extends React.Component<GamePlayProps, GamePlayState> {
+export default class GamePlay extends React.Component<GamePlayProps, GamePlayState> {
     gameService: GameService;
 
     constructor(props: GamePlayProps) {
@@ -31,10 +30,7 @@ class GamePlay extends React.Component<GamePlayProps, GamePlayState> {
         this.state = {
             rollCount: 0,
             hasAnotherRoll: true,
-            dice: [],
-            selectedDiceIndicies: [],
-            availableRules: [],
-            roundOutcomes: []
+            selectedDiceIndicies: []
         };
 
         this.gameService.rollCount.subscribe(rollCount => {
@@ -49,29 +45,47 @@ class GamePlay extends React.Component<GamePlayProps, GamePlayState> {
             });
         });
 
-        this.gameService.dice.subscribe(dice =>  {
+        this.gameService.currentHand.subscribe(currentHand => {
             this.setState({
-                dice: dice
+                currentHand: currentHand
             });
         });
 
-        this.gameService.availableRules.subscribe(rules => {
+        this.gameService.scoreboard.subscribe(scoreboard =>  {
             this.setState({
-                availableRules: rules
+                scoreboard: scoreboard
             });
         });
+    }
 
-        this.gameService.roundOutcomes.subscribe(roundOutcomes => {
-            this.setState({
-                roundOutcomes: roundOutcomes
-            });
-        });
+    componentDidMount() {
+        this.startGame();
+    }
 
+    startGame() {
         this.gameService.startGame([this.props.name]);
     }
 
     rollDice() {
-        this.gameService.rollDice(this.state.selectedDiceIndicies);
+        if (!this.state.currentHand)
+            return;
+
+        const dice = this.state.currentHand.getDice();
+        const diceToRoll = [];
+        for (let i = 0; i < dice.length; i++) {
+            if (this.state.selectedDiceIndicies.every(index => index !== i))
+            {
+                diceToRoll.push(i);
+            }
+        }
+        this.gameService.rollDice(diceToRoll);
+    }
+
+    onKeepDiceChanged(event: FormEvent<HTMLButtonElement>) {
+        if (event.currentTarget.disabled)
+            return;
+        
+        this.keepDice();
     }
 
     keepDice() {
@@ -98,43 +112,39 @@ class GamePlay extends React.Component<GamePlayProps, GamePlayState> {
     }
 
     render() {
-        const diceSelection = this.state.rollCount > 0
+        const diceSelection = !!this.state.currentHand
             ? (
-                <div>
-                    <p>Your Dice:</p>
-                    <DiceSelection onDiceSelectionChanged={selectedIndicies => this.onDiceSelectionChanged(selectedIndicies)}
-                        canSelectDice={this.state.hasAnotherRoll}
-                        dice={this.state.dice} />
-                </div>
+                <DiceSelection onDiceSelectionChanged={selectedIndicies => this.onDiceSelectionChanged(selectedIndicies)}
+                    selectedDiceIndicies={this.state.selectedDiceIndicies}
+                    canSelectDice={this.state.hasAnotherRoll && this.state.rollCount > 0}
+                    currentHand={this.state.currentHand} />
             )
             : null;
 
-        const keepDiceButton = this.state.rollCount > 0 && this.state.selectedRule
-            ? <button onClick={() => this.keepDice()}>Keep Dice</button>
-            : null;
-        const rollButton = this.state.hasAnotherRoll ? <button onClick={() => this.rollDice()}>Roll</button> : null;
-
-        const scoreboard = !!this.state.roundOutcomes ? 
+        const scoreboard = !!this.state.scoreboard && this.state.currentHand ?
             (
-                <div>
-                    <p>Round Outcomes:</p>
-                    <ScoreboardComponent roundOutcomes={this.state.roundOutcomes} />
-                </div>
+                <ScoreboardComponent rollCount={this.state.rollCount}
+                    selectedRule={this.state.selectedRule}
+                    onSelectedRuleChanged={selectedRule => this.onSelectedRuleChanged(selectedRule)}
+                    scoreboard={this.state.scoreboard}
+                    currentHand={this.state.currentHand} />
             )
             : null;
 
         return (
             <div>
-                <p>Roll Count: {this.state.rollCount}</p>
-                {diceSelection}
-                {keepDiceButton}
-                {rollButton}
-                <RuleSelection onSelectedRuleChanged={selectedRule => this.onSelectedRuleChanged(selectedRule)}
-                    rules={this.state.availableRules}/>
-                {scoreboard}
+                <div className='Buttons'>
+                    <button disabled={!this.state.selectedRule} onClick={() => this.keepDice()}>Keep Dice</button>
+                    <button disabled={!this.state.hasAnotherRoll} onClick={() => this.rollDice()}>Roll</button>
+                </div>
+                <div className='Dice'>
+                    {diceSelection}
+                </div>
+                <div className='Scoreboard'>
+                    {scoreboard}
+                    <div className='RollCount'>RollCount: {this.state.rollCount}</div>
+                </div>
             </div>
         )
     }
 }
-
-export default GamePlay

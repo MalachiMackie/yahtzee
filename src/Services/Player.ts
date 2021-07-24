@@ -1,7 +1,7 @@
-import { Hand } from "./Hand";
-import { Rule } from "./Rule";
+import Hand from "./Hand";
+import Rule from "./Rule";
 import { RuleSet } from "./RuleSet";
-import { RoundOutcome, Scoreboard } from "./Scoreboard";
+import Scoreboard from "./Scoreboard";
 
 class PlayerNotInitializedError extends Error {
 
@@ -47,19 +47,11 @@ export class Player {
         return this.currentHand;
     }
 
-    getAvailableRules(): Rule[] {
-        if (!this.scoreboard || !this.currentHand) {
+    getScoreboard(): Scoreboard {
+        if (!this.scoreboard) {
             throw new PlayerNotInitializedError();
         }
 
-        return this.scoreboard.getAvailableRules();
-    }
-
-    getRoundOutcomes(): RoundOutcome[] {
-        if (!this.scoreboard || !this.currentHand) {
-            throw new PlayerNotInitializedError();
-        }
-
-        return this.scoreboard.getRoundOutcomes();
+        return this.scoreboard;
     }
 }

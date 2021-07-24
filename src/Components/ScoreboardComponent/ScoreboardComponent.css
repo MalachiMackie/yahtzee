@@ -1,0 +1,28 @@
+div.ScoreboardRoot {
+    text-align: left;
+    padding: 10px;
+    border: 2px solid black;
+}
+
+div.Rule {
+    margin-left: 15px;
+}
+
+div.RuleName {
+    margin: 3px;
+    display: inline;
+    font-size: large
+}
+
+div.RuleScore {
+    float: right;
+    margin-left: 20px;
+}
+
+h1 {
+    font-size: x-large;
+}
+
+h2 {
+    font-size: large
+}

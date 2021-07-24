@@ -1,9 +1,10 @@
-.Welcome {
+div.Welcome {
   text-align: center;
-}
-
-h1 {
-  
+  margin: auto;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%)
 }
 
 button {

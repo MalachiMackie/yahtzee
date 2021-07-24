@@ -1,0 +1,17 @@
+div.Die {
+    display: block;
+    padding: 10px 15px;
+    margin: 5px;
+    border: 2px solid black;
+    border-radius: 7px;
+    background-color: white;
+    color: black;
+}
+
+div.Selected {
+    background-color: green;
+}
+
+div.DieRoot {
+    display: inline-block;
+}
