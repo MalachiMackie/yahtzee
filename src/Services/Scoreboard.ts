@@ -29,7 +29,7 @@ export default class Scoreboard {
 
     getSectionScore(section: RuleSection): number {
         const applicableOutcomes = this.roundOutcomes.filter(outcome => outcome.rule.section === section);
-        const scores = applicableOutcomes.map(outcome => outcome.rule.getScore(outcome.hand));
+        const scores = applicableOutcomes.map(outcome => outcome.rule.getScore(outcome.hand, this, outcome.rule.key));
         let score = scores.reduce((a, b) => a + b, 0);
 
         if (section === RuleSection.Upper) {
@@ -47,11 +47,11 @@ export default class Scoreboard {
         return this.roundOutcomes;
     }
 
-    isYahtzeeBonusAvailable(hand: Hand): boolean {
-        const yahtzeeRule = this.rules.find(rule => rule.name.match(/[Yy]ahtzee/))!;
-        return this.roundOutcomes.some(outcome => outcome.rule.key === yahtzeeRule.key)
-            && yahtzeeRule.isApplicableToHand(hand);
-    }
+    // isYahtzeeBonusAvailable(hand: Hand): boolean {
+    //     const yahtzeeRule = this.rules.find(rule => rule.name.match(/[Yy]ahtzee/))!;
+    //     return this.roundOutcomes.some(outcome => outcome.rule.key === yahtzeeRule.key)
+    //         && yahtzeeRule.isApplicable(hand);
+    // }
 
 
     keepHand(hand: Hand, rule: Rule): void {

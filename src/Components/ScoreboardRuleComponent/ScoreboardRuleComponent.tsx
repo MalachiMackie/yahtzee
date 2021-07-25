@@ -1,5 +1,7 @@
-import React, { ChangeEvent } from "react";
+import './ScoreboardRuleComponent.css'
+import React from "react";
 import Rule, { RuleScore } from "../../Services/Rule";
+import ScoreboardRow from "../ScoreboardRow/ScoreboardRow";
 
 interface ScoreboardRule {
     rule: Rule,
@@ -17,22 +19,23 @@ interface RuleComponentProps
 
 class RuleComponent extends React.Component<RuleComponentProps>
 {
-    onInputChanged(event: ChangeEvent<HTMLInputElement>) {
-        this.props.onRuleSelectionChanged(event.target.checked);
+    onSelectedChanged(isSelected: boolean) {
+        this.props.onRuleSelectionChanged(isSelected);
     }
 
     render() {
         let score = this.props.scoreboardRule.score.toString();
         if (this.props.scoreboardRule.isPotentialScore)
             score = '(' + score + ')';
-
-        const input = <input type='checkbox' checked={this.props.isSelected} onChange={event => this.onInputChanged(event)} />;
+        let canSelect = this.props.canSelect && this.props.scoreboardRule.isPotentialScore;
 
         return (
             <div className='Rule'>
-                {this.props.canSelect ? input : null}
-                <div className='RuleName'>{this.props.scoreboardRule.rule.name}:</div>
-                <div className='RuleScore'>{score}</div>
+                
+                <ScoreboardRow canSelect={canSelect} onSelectionChanged={isSelected => this.onSelectedChanged(isSelected)} isSelected={this.props.isSelected} left={<div>{this.props.scoreboardRule.rule.name + ':'}</div>} right={<div>{score}</div>} />
+                
+                {/* <div className='RuleName'>{this.props.scoreboardRule.rule.name}:</div>
+                <div className='RuleScore'>{score}</div> */}
             </div>
         )
     }

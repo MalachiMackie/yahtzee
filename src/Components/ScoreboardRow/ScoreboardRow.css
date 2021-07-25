@@ -1,0 +1,27 @@
+div.ScoreboardRowRoot > div.Left > input {
+    margin-top: 8px;
+    float: left;
+}
+
+div.ScoreboardRowRoot > div.Left > div {
+    float: left;
+    width: auto;
+    font-size: large;
+}
+
+div.ScoreboardRowRoot > div.Left > div.HasInput {
+    margin: 1px 10px;
+}
+
+div.ScoreboardRowRoot > div.Left > div.HasNoInput {
+    margin: 1px 30px;
+}
+
+div.ScoreboardRowRoot > div.Right {
+    overflow: hidden;
+    text-align: right;
+}
+
+div.ScoreboardRowRoot {
+    overflow: hidden;
+}

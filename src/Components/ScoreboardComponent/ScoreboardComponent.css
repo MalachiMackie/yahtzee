@@ -4,19 +4,8 @@ div.ScoreboardRoot {
     border: 2px solid black;
 }
 
-div.Rule {
+div.ScoreboardRow {
     margin-left: 15px;
-}
-
-div.RuleName {
-    margin: 3px;
-    display: inline;
-    font-size: large
-}
-
-div.RuleScore {
-    float: right;
-    margin-left: 20px;
 }
 
 h1 {
@@ -25,4 +14,17 @@ h1 {
 
 h2 {
     font-size: large
+}
+
+h3 {
+    font-size: medium;
+    margin-bottom: 5px;
+}
+
+div.TotalRow > div.TotalName {
+    display: inline;
+}
+
+div.TotalRow > div.TotalValue {
+    float: right;
 }

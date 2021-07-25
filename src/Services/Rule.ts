@@ -1,8 +1,9 @@
 import Hand from "./Hand";
+import Scoreboard from './Scoreboard';
 
 export type RuleScore = number;
-export type RuleScoreFunction = (hand: Hand) => RuleScore;
-export type RuleApplicableFunction = (hand: Hand) => boolean;
+export type RuleScoreFunction = (hand: Hand, scoreboard: Scoreboard, ruleKey: number) => RuleScore;
+export type RuleApplicableFunction = (hand: Hand, scoreboard: Scoreboard, ruleKey: number) => boolean;
 
 export enum RuleSection {
     Upper,
@@ -14,18 +15,26 @@ export default class Rule {
     readonly name: string;
     readonly section: RuleSection;
     readonly countsTowardsRuleCount: boolean;
-    getScore: (hand: Hand) => RuleScore;
-    isApplicableToHand: (hand: Hand) => boolean;
+    readonly canSelect: boolean;
+    getScore: RuleScoreFunction;
+    isApplicable: RuleApplicableFunction;
 
-    constructor(key: number, name: string, section: RuleSection, scoreFunction: RuleScoreFunction, isApplicableToHand: RuleApplicableFunction, countsTowardsRuleCount: boolean = true) {
+    constructor(key: number,
+            name: string,
+            section: RuleSection,
+            scoreFunction: RuleScoreFunction,
+            isApplicableFunction: RuleApplicableFunction,
+            countsTowardsRuleCount: boolean = true,
+            canSelect: boolean = true) {
         this.key = key;
         this.name = name;
         this.section = section;
         this.countsTowardsRuleCount = countsTowardsRuleCount;
-        this.isApplicableToHand = isApplicableToHand;
-        this.getScore = (hand) => {
-            return this.isApplicableToHand(hand)
-                ? scoreFunction(hand)
+        this.canSelect = canSelect;
+        this.isApplicable = isApplicableFunction;
+        this.getScore = (hand, scoreboard, ruleKey) => {
+            return this.isApplicable(hand, scoreboard, ruleKey)
+                ? scoreFunction(hand, scoreboard, ruleKey)
                 : 0
         };
     }

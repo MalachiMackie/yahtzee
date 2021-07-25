@@ -1,0 +1,15 @@
+<svg width="20.241mm" height="20.241mm" version="1.1" viewBox="0 0 20.241 20.241" xmlns="http://www.w3.org/2000/svg">
+ <g transform="translate(-95.713 -138.05)">
+  <g transform="matrix(.13229 0 0 .13229 92.538 99.833)" fill-rule="evenodd" stroke="#000" stroke-width="3">
+   <rect x="25.5" y="290.36" width="150" height="150" rx="50" ry="50" color="#000000" fill="#fff"/>
+   <g>
+    <circle transform="translate(-261,101.5)" cx="325" cy="227.36" r="12.5" color="#000000"/>
+    <circle transform="translate(-261,173.5)" cx="325" cy="227.36" r="12.5" color="#000000"/>
+    <circle transform="translate(-261,137.5)" cx="325" cy="227.36" r="12.5" color="#000000"/>
+    <circle transform="translate(-189,101.5)" cx="325" cy="227.36" r="12.5" color="#000000"/>
+    <circle transform="translate(-189,173.5)" cx="325" cy="227.36" r="12.5" color="#000000"/>
+    <circle transform="translate(-189,137.5)" cx="325" cy="227.36" r="12.5" color="#000000"/>
+   </g>
+  </g>
+ </g>
+</svg>

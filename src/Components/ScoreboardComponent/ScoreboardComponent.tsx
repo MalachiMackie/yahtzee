@@ -4,6 +4,7 @@ import Hand from "../../Services/Hand";
 import Rule, { RuleScore, RuleSection } from "../../Services/Rule";
 import Scoreboard from "../../Services/Scoreboard";
 import ScoreboardRuleComponent from '../ScoreboardRuleComponent/ScoreboardRuleComponent';
+import ScoreboardRow from '../ScoreboardRow/ScoreboardRow';
 
 interface ScoreboardComponentProps {
     scoreboard: Scoreboard;
@@ -15,8 +16,10 @@ interface ScoreboardComponentProps {
 
 interface ScoreboardComponentState {
     selectedRule?: Rule
-    upperSectionRules: ScoreboardRule[];
-    lowerSectionRules: ScoreboardRule[];
+    selectableUpperSectionRules: ScoreboardRule[];
+    selectableLowerSectionRules: ScoreboardRule[];
+    notSelectableUpperSectionRules: ScoreboardRule[];
+    notSelectableLowerSectionRules: ScoreboardRule[];
     currentHand: Hand,
     rollCount: number,
     scoreboard: Scoreboard
@@ -26,7 +29,7 @@ type ScoreboardRule = {rule: Rule, score: RuleScore, isPotentialScore: boolean};
 
 class ScoreboardComponent extends React.Component<ScoreboardComponentProps, ScoreboardComponentState>
 {
-    private static compareRules(a: ScoreboardRule, b: ScoreboardRule): number {
+    private static sortRulesByKey(a: ScoreboardRule, b: ScoreboardRule): number {
         if (a.rule.key > b.rule.key) {
             return 1;
         }
@@ -45,8 +48,10 @@ class ScoreboardComponent extends React.Component<ScoreboardComponentProps, Scor
 
         this.state = {
             selectedRule: props.selectedRule,
-            upperSectionRules: rules.upperSectionRules,
-            lowerSectionRules: rules.lowerSectionRules,
+            selectableUpperSectionRules: rules.filter(scoreboardRule => scoreboardRule.rule.canSelect && scoreboardRule.rule.section === RuleSection.Upper),
+            selectableLowerSectionRules: rules.filter(scoreboardRule => scoreboardRule.rule.canSelect && scoreboardRule.rule.section === RuleSection.Lower),
+            notSelectableUpperSectionRules: rules.filter(scoreboardRule => !scoreboardRule.rule.canSelect && scoreboardRule.rule.section === RuleSection.Upper),
+            notSelectableLowerSectionRules: rules.filter(scoreboardRule => !scoreboardRule.rule.canSelect && scoreboardRule.rule.section === RuleSection.Lower),
             currentHand: props.currentHand,
             rollCount: props.rollCount,
             scoreboard: props.scoreboard
@@ -60,8 +65,10 @@ class ScoreboardComponent extends React.Component<ScoreboardComponentProps, Scor
 
         const rules = this.getRules(this.props.scoreboard, this.props.currentHand, this.props.rollCount);
         this.setState({
-            lowerSectionRules: rules.lowerSectionRules,
-            upperSectionRules: rules.upperSectionRules,
+            selectableUpperSectionRules: rules.filter(scoreboardRule => scoreboardRule.rule.canSelect && scoreboardRule.rule.section === RuleSection.Upper),
+            selectableLowerSectionRules: rules.filter(scoreboardRule => scoreboardRule.rule.canSelect && scoreboardRule.rule.section === RuleSection.Lower),
+            notSelectableUpperSectionRules: rules.filter(scoreboardRule => !scoreboardRule.rule.canSelect && scoreboardRule.rule.section === RuleSection.Upper),
+            notSelectableLowerSectionRules: rules.filter(scoreboardRule => !scoreboardRule.rule.canSelect && scoreboardRule.rule.section === RuleSection.Lower),
             rollCount: this.props.rollCount,
             currentHand: this.props.currentHand,
             scoreboard: this.props.scoreboard,
@@ -69,28 +76,25 @@ class ScoreboardComponent extends React.Component<ScoreboardComponentProps, Scor
         });
     }
 
-    private getRules(scoreboard: Scoreboard, currentHand: Hand, rollCount: number): {upperSectionRules: ScoreboardRule[], lowerSectionRules: ScoreboardRule[]} {
+    private getRules(scoreboard: Scoreboard, currentHand: Hand, rollCount: number): ScoreboardRule[] {
 
         const availableRules = scoreboard.getAvailableRules()
         const roundOutcomes = scoreboard.getRoundOutcomes();
 
         let rules: ScoreboardRule[] =[];
         availableRules.forEach(availableRule => {
-            rules.push({rule: availableRule, score: rollCount > 0 ? availableRule.getScore(currentHand) : 0, isPotentialScore: true});
+            rules.push({
+                rule: availableRule,
+                score: rollCount > 0 ? availableRule.getScore(currentHand, scoreboard, availableRule.key) : 0,
+                isPotentialScore: availableRule.canSelect
+            });
         })
         roundOutcomes.forEach(roundOutcome => {
-            rules.push({rule: roundOutcome.rule, score: roundOutcome.rule.getScore(roundOutcome.hand), isPotentialScore: false})
+            rules.push({rule: roundOutcome.rule, score: roundOutcome.rule.getScore(roundOutcome.hand, scoreboard, roundOutcome.rule.key), isPotentialScore: false})
         });
 
-        rules = rules.sort(ScoreboardComponent.compareRules);
-
-        const upperSectionRules = rules.filter(rule => rule.rule.section === RuleSection.Upper);
-        const lowerSectionRules = rules.filter(rule => rule.rule.section === RuleSection.Lower);
-
-        return {
-            upperSectionRules: upperSectionRules,
-            lowerSectionRules: lowerSectionRules
-        };
+        rules = rules.sort(ScoreboardComponent.sortRulesByKey);
+        return rules;
     }
 
     setSelectedRule(rule?: Rule) {
@@ -110,15 +114,24 @@ class ScoreboardComponent extends React.Component<ScoreboardComponentProps, Scor
         return (<ScoreboardRuleComponent key={scoreboardRule.rule.key} onRuleSelectionChanged={isSelected => this.onRuleSelectionChanged(isSelected ? scoreboardRule.rule : undefined)} scoreboardRule={scoreboardRule} canSelect={this.state.rollCount > 0} isSelected={this.state.selectedRule === scoreboardRule.rule} />)
     }
 
+    private getScoreboardRuleScore(scoreboardRule: ScoreboardRule): number {
+        return scoreboardRule.isPotentialScore
+            ? 0
+            : scoreboardRule.score
+    }
+
     render() {
         return (
             <div className='ScoreboardRoot'>
                 <h1>Scoreboard</h1>
                 <h2>Upper Section</h2>
-                {this.state.upperSectionRules.map(scoreboardRule => this.getRuleComponentFromRule(scoreboardRule))}
+                {this.state.selectableUpperSectionRules.map(scoreboardRule => this.getRuleComponentFromRule(scoreboardRule))}
+                
+                <ScoreboardRow canSelect={false} left={<div>{'Total:'}</div>} right={<div>{this.state.selectableUpperSectionRules.map(this.getScoreboardRuleScore).reduce((a: number, b: number) => a + b, 0).toString()}</div>} />
+                {this.state.notSelectableUpperSectionRules.map(scoreboardRule => this.getRuleComponentFromRule(scoreboardRule))}
 
                 <h2>Lower Section</h2>
-                {this.state.lowerSectionRules.map(scoreboardRule => this.getRuleComponentFromRule(scoreboardRule))}
+                {this.state.selectableLowerSectionRules.map(scoreboardRule => this.getRuleComponentFromRule(scoreboardRule))}
             </div>
         );
     }

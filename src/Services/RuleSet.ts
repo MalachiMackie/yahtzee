@@ -68,6 +68,13 @@ export class RuleSet {
         this.createRule('Fours', RuleSection.Upper, (hand: Hand) => this.sumHandWithValues(hand, [4]));
         this.createRule('Fives', RuleSection.Upper, (hand: Hand) => this.sumHandWithValues(hand, [5]));
         this.createRule('Sixes', RuleSection.Upper, (hand: Hand) => this.sumHandWithValues(hand, [6]));
+        const upperSectionBonusApplies: RuleApplicableFunction = (_, scoreboard, ruleKey) => {
+            const outcomes = scoreboard.getRoundOutcomes();
+            const applicableOutcomes = outcomes.filter(outcome => outcome.rule.key !== ruleKey && outcome.rule.section === RuleSection.Upper);
+            const score = applicableOutcomes.map(outcome => outcome.rule.getScore(outcome.hand, scoreboard, ruleKey)).reduce((a: number, b: number) => a + b, 0)
+            return score >= 63;
+        }
+        this.createRule('Upper Section Bonus', RuleSection.Upper, () => 35, upperSectionBonusApplies, false);
 
         const getThreeOfAKindValue = (hand: Hand) => this.getValueOfHandThatHasCount(hand, value => value >= 3);
         const getFourOfAKindValue = (hand: Hand) => this.getValueOfHandThatHasCount(hand, value => value >= 4);
@@ -91,8 +98,8 @@ export class RuleSet {
         return this.getRules().filter(rule => rule.countsTowardsRuleCount).length;
     }
 
-    private createRule(name: string, section: RuleSection, scoreFunction: RuleScoreFunction, isApplicableToHand: RuleApplicableFunction = () => true): void {
-        this.rules.push(new Rule(this.rules.length, name, section, scoreFunction, isApplicableToHand));
+    private createRule(name: string, section: RuleSection, scoreFunction: RuleScoreFunction, isApplicable: RuleApplicableFunction = () => true, canSelect: boolean = true): void {
+        this.rules.push(new Rule(this.rules.length, name, section, scoreFunction, isApplicable, true, canSelect));
     }
 
     private rules: Rule[] = [];
