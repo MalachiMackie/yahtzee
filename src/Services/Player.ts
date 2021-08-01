@@ -1,5 +1,5 @@
 import Hand from "./Hand";
-import Rule from "./Rule";
+import { RuleKey } from "./Rule";
 import { RuleSet } from "./RuleSet";
 import Scoreboard from "./Scoreboard";
 
@@ -30,12 +30,22 @@ export class Player {
     }
 
 
-    keepDice(rule: Rule): void {
+    keepDice(ruleKeys: RuleKey[]): void {
         if (!this.scoreboard || !this.currentHand) {
             throw new PlayerNotInitializedError();
         }
 
-        this.scoreboard.keepHand(this.currentHand, rule);
+        if (ruleKeys.length === 1) {
+            this.scoreboard.keepHand(this.currentHand, ruleKeys[0]);
+        }
+        else if (ruleKeys.length === 2 && ruleKeys.some(x => x === RuleKey.YahtzeeBonus)) {
+            const otherRuleKey = ruleKeys.find(x => x !== RuleKey.YahtzeeBonus);
+            console.log(otherRuleKey);
+            if (!otherRuleKey) {
+                throw new Error('Another rule must be selected other that yahtzee bonus');
+            }
+            this.scoreboard.applyYahtzeeBonus(this.currentHand, otherRuleKey)
+        }
         this.currentHand = new Hand();
     }
 

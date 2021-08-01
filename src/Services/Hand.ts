@@ -1,11 +1,11 @@
 import { Die } from "./Die";
 
-class TooManyDiceForHandError extends Error {
+export class TooManyDiceForHandError extends Error {
 
 }
 
 export default class Hand {
-    private readonly maxDice: number = 5;
+    static readonly maxDice: number = 5;
     private dice: Die[] = [];
 
     constructor(dice?: Die[]) {
@@ -13,7 +13,7 @@ export default class Hand {
     }
 
     private setup(dice?: Die[]) {
-        if (!!dice && dice.length > this.maxDice) {
+        if (!!dice && dice.length > Hand.maxDice) {
             throw new TooManyDiceForHandError()
         }
 
@@ -22,7 +22,7 @@ export default class Hand {
             return;
         }
         
-        for (let i = 0; i < this.maxDice; i++) {
+        for (let i = 0; i < Hand.maxDice; i++) {
             this.dice[i] = new Die()
         }
     }
@@ -30,7 +30,7 @@ export default class Hand {
     rollDice(diceIndiciesToRoll?: number[]) {
         if (!diceIndiciesToRoll || !diceIndiciesToRoll.some(() => true)) {
             diceIndiciesToRoll = [];
-            for (let i = 0; i < this.maxDice; i++) {
+            for (let i = 0; i < Hand.maxDice; i++) {
                 diceIndiciesToRoll.push(i);
             }
         }

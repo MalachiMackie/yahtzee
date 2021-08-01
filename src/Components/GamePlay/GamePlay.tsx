@@ -1,7 +1,7 @@
 import './GamePlay.css'
 import React, { FormEvent } from "react";
 import GameService from '../../Services/GameService';
-import Rule from "../../Services/Rule";
+import Rule, { RuleKey } from "../../Services/Rule";
 import Scoreboard from "../../Services/Scoreboard";
 import DiceSelection from "../DiceSelection/DiceSelection";
 import ScoreboardComponent from "../ScoreboardComponent/ScoreboardComponent";
@@ -14,7 +14,7 @@ interface GamePlayProps {
 interface GamePlayState {
     rollCount: number;
     hasAnotherRoll: boolean;
-    selectedRule?: Rule;
+    selectedRules: Rule[];
     selectedDiceIndicies: number[];
     scoreboard?: Scoreboard;
     currentHand?: Hand;
@@ -30,7 +30,8 @@ export default class GamePlay extends React.Component<GamePlayProps, GamePlaySta
         this.state = {
             rollCount: 0,
             hasAnotherRoll: true,
-            selectedDiceIndicies: []
+            selectedDiceIndicies: [],
+            selectedRules: []
         };
 
         this.gameService.rollCount.subscribe(rollCount => {
@@ -89,14 +90,14 @@ export default class GamePlay extends React.Component<GamePlayProps, GamePlaySta
     }
 
     keepDice() {
-        if (!this.state.selectedRule) {
-            throw new Error('No rule is selected');
+        if (this.state.selectedRules.length <= 0) {
+            throw new Error('A rule must be selected');
         }
-        this.gameService.keepDice(this.state.selectedRule);
+        this.gameService.keepDice(this.state.selectedRules.map(x => x.key));
         this.setState({
             selectedDiceIndicies: [],
-            selectedRule: undefined
-        })
+            selectedRules: []
+        });
     }
 
     onDiceSelectionChanged(indicies: number[]) {
@@ -105,9 +106,9 @@ export default class GamePlay extends React.Component<GamePlayProps, GamePlaySta
         });
     }
 
-    onSelectedRuleChanged(rule?: Rule) {
+    onSelectedRuleChanged(rules: Rule[]) {
         this.setState({
-            selectedRule: rule
+            selectedRules: rules
         });
     }
 
@@ -124,17 +125,22 @@ export default class GamePlay extends React.Component<GamePlayProps, GamePlaySta
         const scoreboard = !!this.state.scoreboard && this.state.currentHand ?
             (
                 <ScoreboardComponent rollCount={this.state.rollCount}
-                    selectedRule={this.state.selectedRule}
-                    onSelectedRuleChanged={selectedRule => this.onSelectedRuleChanged(selectedRule)}
+                    selectedRules={this.state.selectedRules}
+                    onSelectedRuleChanged={selectedRules => this.onSelectedRuleChanged(selectedRules)}
                     scoreboard={this.state.scoreboard}
                     currentHand={this.state.currentHand} />
             )
             : null;
 
+        const selectedYahtzeeBonus = this.state.selectedRules.some(x => x.key === RuleKey.YahtzeeBonus);
+
+        const canSelectDice: boolean = (!selectedYahtzeeBonus && this.state.selectedRules.length === 1)
+            || (selectedYahtzeeBonus && this.state.selectedRules.length === 2);
+
         return (
             <div>
                 <div className='Buttons'>
-                    <button disabled={!this.state.selectedRule} onClick={() => this.keepDice()}>Keep Dice</button>
+                    <button disabled={!canSelectDice} onClick={() => this.keepDice()}>Keep Dice</button>
                     <button disabled={!this.state.hasAnotherRoll} onClick={() => this.rollDice()}>Roll</button>
                 </div>
                 <div className='Dice'>

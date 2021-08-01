@@ -2,39 +2,60 @@ import Hand from "./Hand";
 import Scoreboard from './Scoreboard';
 
 export type RuleScore = number;
-export type RuleScoreFunction = (hand: Hand, scoreboard: Scoreboard, ruleKey: number) => RuleScore;
-export type RuleApplicableFunction = (hand: Hand, scoreboard: Scoreboard, ruleKey: number) => boolean;
+export type RuleScoreFunction = (scoreboard: Scoreboard, hand?: Hand) => RuleScore;
+export type RuleApplicableFunction = (scoreboard: Scoreboard, hand?: Hand) => boolean;
+export type RuleCanSelectFunction = (scoreboard: Scoreboard, hand: Hand) => boolean;
 
 export enum RuleSection {
     Upper,
     Lower
 }
 
+export enum RuleKey {
+    Aces,
+    Twos,
+    Threes,
+    Fours,
+    Fives,
+    Sixes,
+    UpperSectionBonus,
+    ThreeOfAKind,
+    FourOfAKind,
+    FullHouse,
+    SmallStraight,
+    LargeStraight,
+    Chance,
+    Yahtzee,
+    YahtzeeBonus
+}
+
 export default class Rule {
-    readonly key: number;
+    readonly key: RuleKey;
     readonly name: string;
     readonly section: RuleSection;
     readonly countsTowardsRuleCount: boolean;
-    readonly canSelect: boolean;
+    readonly canSelect: RuleCanSelectFunction;
+    getScoreIfApplicable: RuleScoreFunction;
     getScore: RuleScoreFunction;
     isApplicable: RuleApplicableFunction;
 
-    constructor(key: number,
+    constructor(key: RuleKey,
             name: string,
             section: RuleSection,
             scoreFunction: RuleScoreFunction,
             isApplicableFunction: RuleApplicableFunction,
             countsTowardsRuleCount: boolean = true,
-            canSelect: boolean = true) {
+            canSelect: RuleCanSelectFunction = () => true) {
         this.key = key;
         this.name = name;
         this.section = section;
         this.countsTowardsRuleCount = countsTowardsRuleCount;
         this.canSelect = canSelect;
         this.isApplicable = isApplicableFunction;
-        this.getScore = (hand, scoreboard, ruleKey) => {
-            return this.isApplicable(hand, scoreboard, ruleKey)
-                ? scoreFunction(hand, scoreboard, ruleKey)
+        this.getScore = scoreFunction;
+        this.getScoreIfApplicable = (hand, scoreboard) => {
+            return this.isApplicable(hand, scoreboard)
+                ? this.getScore(hand, scoreboard)
                 : 0
         };
     }

@@ -9,37 +9,18 @@ interface Props {
     right: ReactElement;
 }
 
-interface State {
-    isSelected?: boolean;
-}
-
-export default class ScoreboardRow extends React.Component<Props, State> {
-
-    constructor(props: Props) {
-        super(props);
-
-        if (props.canSelect && !!props.isSelected) {
-            this.state = {
-                isSelected: props.isSelected
-            };
-            return;
-        }
-
-        this.state = {};
-    }
+export default class ScoreboardRow extends React.Component<Props> {
 
     onInputChanged(event: ChangeEvent<HTMLInputElement>) {
-        if (this.props.canSelect && !!this.props.onSelectionChanged && !!this.state.isSelected) {
+        if (!this.props.canSelect || !this.props.onSelectionChanged) {
             return;
         }
 
-        this.setState({
-            isSelected: event.target.checked
-        }, () => this.props.onSelectionChanged!(this.state.isSelected!));
+        this.props.onSelectionChanged(event.target.checked);
     }
 
     render() {
-        const input = this.props.canSelect ? <input type='checkbox' checked={this.state.isSelected} onChange={(event) => this.onInputChanged(event)} /> : null;
+        const input = <input hidden={!this.props.canSelect} type='checkbox' checked={this.props.isSelected} onChange={(event) => this.onInputChanged(event)} />;
 
         return (
             <div className='ScoreboardRowRoot'>

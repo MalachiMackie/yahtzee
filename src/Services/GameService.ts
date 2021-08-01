@@ -1,7 +1,7 @@
 import { BehaviorSubject, map } from "rxjs";
 import Hand from "./Hand";
 import { Player } from "./Player";
-import Rule from "./Rule";
+import { RuleKey } from "./Rule";
 import { RuleSet } from "./RuleSet";
 import Scoreboard from "./Scoreboard";
 
@@ -16,7 +16,7 @@ class TooManyRollsError extends Error {
 
 class GameService {
     private readonly maxTurns: number = new RuleSet().ruleCount();
-    private readonly maxRolls: number = 3;
+    private readonly maxRolls: number = 100;
 
     private players: Player[] = [];
 
@@ -66,13 +66,13 @@ class GameService {
         this.scoreboardSubject.next(player.getScoreboard());
     }
 
-    keepDice(rule: Rule) {
+    keepDice(ruleKeys: RuleKey[]) {
         if (this.rollCountSubject.value === 0) {
             throw new DiceNotRolledError()
         }
 
         const player = this.getCurrentPlayer();
-        player.keepDice(rule);
+        player.keepDice(ruleKeys);
         this.nextPlayer();
         this.currentHandSubject.next(player.getCurrentHand());
         this.scoreboardSubject.next(player.getScoreboard());

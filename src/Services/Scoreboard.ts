@@ -1,18 +1,27 @@
 import Hand from "./Hand";
 import { RuleSet } from "./RuleSet";
 import Rule, { RuleSection } from "./Rule";
+import { RuleKey, RuleScore } from './Rule';
 
 export interface RoundOutcome {
     rule: Rule,
-    hand: Hand
+    hand?: Hand,
+    overriddenScore?: number
+}
+
+class RuleNotFoundError extends Error
+{
+
 }
 
 export default class Scoreboard {
     private roundOutcomes: RoundOutcome[];
     private readonly rules: Rule[];
+    private readonly ruleSet: RuleSet;
 
     constructor(ruleSet: RuleSet) {
         this.roundOutcomes = [];
+        this.ruleSet = ruleSet;
         this.rules = ruleSet.getRules();
     }
 
@@ -29,12 +38,8 @@ export default class Scoreboard {
 
     getSectionScore(section: RuleSection): number {
         const applicableOutcomes = this.roundOutcomes.filter(outcome => outcome.rule.section === section);
-        const scores = applicableOutcomes.map(outcome => outcome.rule.getScore(outcome.hand, this, outcome.rule.key));
+        const scores = applicableOutcomes.map(outcome => outcome.rule.getScoreIfApplicable(this, outcome.hand));
         let score = scores.reduce((a, b) => a + b, 0);
-
-        if (section === RuleSection.Upper) {
-            score += 35;
-        }
 
         return score;
     }
@@ -47,14 +52,97 @@ export default class Scoreboard {
         return this.roundOutcomes;
     }
 
-    // isYahtzeeBonusAvailable(hand: Hand): boolean {
-    //     const yahtzeeRule = this.rules.find(rule => rule.name.match(/[Yy]ahtzee/))!;
-    //     return this.roundOutcomes.some(outcome => outcome.rule.key === yahtzeeRule.key)
-    //         && yahtzeeRule.isApplicable(hand);
-    // }
-
-
-    keepHand(hand: Hand, rule: Rule): void {
-        this.roundOutcomes.push({ rule: rule, hand: hand });
+    keepHand(hand: Hand, ruleKey: RuleKey): void {
+        const rule: Rule | undefined = this.rules.find(x => x.key === ruleKey);
+        if (!rule)
+        {
+            throw new RuleNotFoundError()
+        } 
+        this.roundOutcomes.push({ rule: rule!, hand: hand });
+        this.tryApplyUpperSectionBonus();
     }
+
+    private tryApplyUpperSectionBonus(): void {
+        const upperBonusSection = this.rules.find(x => x.key === RuleKey.UpperSectionBonus);
+        if (!upperBonusSection || this.roundOutcomes.some(x => x.rule.key === upperBonusSection?.key))
+            return;
+
+        if (upperBonusSection.getScoreIfApplicable(this) > 0) {
+            this.roundOutcomes.push({rule: upperBonusSection})
+        }
+    }
+
+    public static readonly yahtzeeBonusRulesToSum: RuleKey[] = [RuleKey.ThreeOfAKind, RuleKey.FourOfAKind, RuleKey.Chance];
+
+    getYahtzeeBonusPossibleRules(hand: Hand): [Rule, RuleScore][] {
+        const yahtzeeBonusRule: Rule = this.getRule(RuleKey.YahtzeeBonus);
+
+        if (!yahtzeeBonusRule?.isApplicable(this, hand))
+            return [];
+
+        const dieValue = hand.getDice()[0].getCurrentFace();
+        const correspondingRuleKey = this.ruleSet.upperSectionRuleValueMap[dieValue];
+        const correspondingRuleOutcome = this.roundOutcomes.find(x => x.rule.key === correspondingRuleKey);
+
+        if (!correspondingRuleOutcome)
+        {
+            const rule = this.getRule(correspondingRuleKey);
+            return [[rule, rule.getScoreIfApplicable(this, hand)]];
+        }
+
+        const applicableRules = this.rules.filter(x => x.canSelect(this, hand) && this.roundOutcomes.every(y => y.rule.key !== x.key) && x.key !== RuleKey.YahtzeeBonus);
+
+        const applicableLowerSectionRules = applicableRules.filter(x => x.section === RuleSection.Lower).map(rule => {
+            const outcome = this.getRoundOutcomeForYahtzeeBonusRule(rule, hand);
+            const applicableRule: [Rule, RuleScore] = [outcome.rule, outcome.overriddenScore ?? outcome.rule.getScore(this, hand)];
+            return applicableRule;
+        });
+
+        yahtzee bonus can be applied as many times as possible
+
+        if (applicableLowerSectionRules.length > 0)
+            return applicableLowerSectionRules;
+        
+        return applicableRules.filter(x => x.section === RuleSection.Upper).map(x => [x, 0]);
+    }
+
+    private getRoundOutcomeForYahtzeeBonusRule(rule: Rule, hand: Hand): RoundOutcome {
+        const roundOutcome: RoundOutcome = {
+            rule: rule,
+            hand: hand
+        };
+        if (Scoreboard.yahtzeeBonusRulesToSum.some(x => x === rule.key)) {
+            roundOutcome.overriddenScore = this.ruleSet.sumHand(hand);
+        }
+
+        return roundOutcome;
+    }
+
+    applyYahtzeeBonus(hand: Hand, ruleKey: RuleKey): void {
+        const yahtzeeBonusRule: Rule = this.getRule(RuleKey.YahtzeeBonus);
+
+        if (!yahtzeeBonusRule?.isApplicable(this, hand))
+            throw new YahtzeeBonusDoesNotApplyError();
+
+        const rule = this.rules.find(x => x.key === ruleKey);
+        if (!rule)
+            throw new RuleNotFoundError();
+
+        this.roundOutcomes.push({hand: hand, rule: yahtzeeBonusRule});
+        this.roundOutcomes.push(this.getRoundOutcomeForYahtzeeBonusRule(rule, hand));
+    }
+
+    private getRule(ruleKey: RuleKey) : Rule
+    {
+        const rule = this.rules.find(x => x.key === ruleKey)
+        if (!rule)
+            throw new RuleNotFoundError();
+        
+        return rule;
+    }
+}
+
+class YahtzeeBonusDoesNotApplyError extends Error
+{
+
 }
