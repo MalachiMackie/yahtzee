@@ -1,5 +1,5 @@
 import './DieComponent.css'
-import React, { ReactElement } from "react";
+import { FC, ReactElement } from "react";
 import { ReactComponent as DieOne } from '../../Images/die_one.svg';
 import { ReactComponent as DieTwo } from '../../Images/die_two.svg';
 import { ReactComponent as DieThree } from '../../Images/die_three.svg';
@@ -15,93 +15,63 @@ import { ReactComponent as DieSixGreen } from '../../Images/die_six_green.svg';
 
 interface DieComponentProps {
     value: number;
+    selected: boolean;
     canSelectDie: boolean;
     onSelectionChanged: (selection: boolean) => void;
 }
 
-interface DieComponentState {
-    selected: boolean
-}
+const DieComponent: FC<DieComponentProps> = ({value, selected, canSelectDie, onSelectionChanged}: DieComponentProps) => {
 
-class DieComponent extends React.Component<DieComponentProps, DieComponentState>
-{
-
-    constructor(props: DieComponentProps) {
-        super(props);
-
-        this.state = {selected: false};
-
-        this.onSelectionChanged = props.onSelectionChanged;
-    }
-
-    onSelectionChanged: (selection: boolean) => void;
-
-    toggleDie() {
-        if (!this.props.canSelectDie)
+    const toggleDie = () => {
+        if (!canSelectDie)
             return;
 
-        this.setState({
-            selected: !this.state.selected
-        }, () => this.onSelectionChanged(this.state.selected));
+        onSelectionChanged(!selected);
     }
 
-    componentDidUpdate(prevProps: DieComponentProps) {
-        if (prevProps.canSelectDie !== this.props.canSelectDie) {
-            this.setState({
-                selected: false
-            });
-        }
-    }
-
-    private getPlainDie(): ReactElement {
-        switch (this.props.value) {
+    function getPlainDie(): ReactElement {
+        switch (value) {
             case 1:
-                return <DieOne onClick={() => this.toggleDie()} className={`Die`} />
+                return <DieOne onClick={() => toggleDie()} className={`Die`} />
             case 2:
-                return <DieTwo onClick={() => this.toggleDie()} className={`Die`}/>
+                return <DieTwo onClick={() => toggleDie()} className={`Die`}/>
             case 3:
-                return <DieThree onClick={() => this.toggleDie()} className={`Die`}/>
+                return <DieThree onClick={() => toggleDie()} className={`Die`}/>
             case 4:
-                return <DieFour onClick={() => this.toggleDie()} className={`Die`}/>
+                return <DieFour onClick={() => toggleDie()} className={`Die`}/>
             case 5:
-                return <DieFive onClick={() => this.toggleDie()} className={`Die`}/>
+                return <DieFive onClick={() => toggleDie()} className={`Die`}/>
             case 6:
-                return <DieSix onClick={() => this.toggleDie()} className={`Die`}/>
+                return <DieSix onClick={() => toggleDie()} className={`Die`}/>
             default:
                 throw new Error();
         }
     }
 
-    private getGreenDie(): ReactElement {
-        switch (this.props.value) {
+    function getGreenDie(): ReactElement {
+        switch (value) {
             case 1:
-                return <DieOneGreen onClick={() => this.toggleDie()} className={`Die`} />
+                return <DieOneGreen onClick={() => toggleDie()} className={`Die`} />
             case 2:
-                return <DieTwoGreen onClick={() => this.toggleDie()} className={`Die`}/>
+                return <DieTwoGreen onClick={() => toggleDie()} className={`Die`}/>
             case 3:
-                return <DieThreeGreen onClick={() => this.toggleDie()} className={`Die`}/>
+                return <DieThreeGreen onClick={() => toggleDie()} className={`Die`}/>
             case 4:
-                return <DieFourGreen onClick={() => this.toggleDie()} className={`Die`}/>
+                return <DieFourGreen onClick={() => toggleDie()} className={`Die`}/>
             case 5:
-                return <DieFiveGreen onClick={() => this.toggleDie()} className={`Die`}/>
+                return <DieFiveGreen onClick={() => toggleDie()} className={`Die`}/>
             case 6:
-                return <DieSixGreen onClick={() => this.toggleDie()} className={`Die`}/>
+                return <DieSixGreen onClick={() => toggleDie()} className={`Die`}/>
             default:
                 throw new Error();
         }
     }
 
-    getDie(): ReactElement {
-        return this.state.selected ? this.getGreenDie() : this.getPlainDie();
-    }
-
-    render() {
-        return (
-            <div className="DieRoot">
-                {this.getDie()}
-            </div>
-        )
-    }
+    return (
+        <div className="DieRoot">
+            {selected ? getGreenDie() : getPlainDie()}
+        </div>
+    )
 }
 
 export default DieComponent;

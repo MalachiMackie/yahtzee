@@ -1,17 +1,13 @@
-import React from 'react';
+import { FC } from 'react';
 import './Welcome.css';
 
-
-class YahtzeeHome extends React.Component<{onPlay: () => void}>
-{
-    render() {
-        return (
-            <div className="Welcome">
-                <h1>Let's play some Yahtzee!</h1>
-                <button onClick={this.props.onPlay}>Play</button>
-            </div>
-        );
-    }
+const YahtzeeHome: FC<{onPlay: () => void}> = ({onPlay}) => {
+    return (
+        <div className="Welcome">
+            <h1>Let's play some Yahtzee!</h1>
+            <button onClick={() => onPlay()}>Play</button>
+        </div>
+    );
 }
 
 

@@ -40,7 +40,6 @@ export class Player {
         }
         else if (ruleKeys.length === 2 && ruleKeys.some(x => x === RuleKey.YahtzeeBonus)) {
             const otherRuleKey = ruleKeys.find(x => x !== RuleKey.YahtzeeBonus);
-            console.log(otherRuleKey);
             if (!otherRuleKey) {
                 throw new Error('Another rule must be selected other that yahtzee bonus');
             }

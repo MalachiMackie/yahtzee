@@ -14,6 +14,13 @@ class TooManyRollsError extends Error {
 
 }
 
+export enum GameStatus {
+    NotStarted,
+    InProgress,
+    Quit,
+    Completed
+}
+
 class GameService {
     private readonly maxTurns: number = new RuleSet().ruleCount();
     private readonly maxRolls: number = 100;
@@ -33,6 +40,9 @@ class GameService {
     private currentHandSubject = new BehaviorSubject<Hand | undefined>(undefined);
     currentHand = this.currentHandSubject.asObservable();
 
+    private statusSubject = new BehaviorSubject<GameStatus>(GameStatus.NotStarted);
+    status = this.statusSubject.asObservable();
+
     startGame(names: string[]): void {
         names.forEach(name => {
             this.players.push(new Player(name));
@@ -43,6 +53,7 @@ class GameService {
 
         const player = this.getCurrentPlayer();
 
+        this.statusSubject.next(GameStatus.InProgress);
         this.rollCountSubject.next(0);
         this.scoreboardSubject.next(player.getScoreboard());
         this.currentHandSubject.next(player.getCurrentHand());
@@ -83,6 +94,7 @@ class GameService {
         this.playersTurn = 0;
         this.turnsElapsed = 0;
         this.rollCountSubject.next(0);
+        this.statusSubject.next(GameStatus.Quit);
     }
 
     private getCurrentPlayer(): Player {

@@ -1,62 +1,51 @@
-import React, { ReactElement } from 'react';
+import React, { FC, ReactElement, useEffect, useMemo, useState } from 'react';
+import GameService, { GameStatus } from '../../Services/GameService';
 import GamePlay from '../GamePlay/GamePlay';
+import GameStart from '../GameStart/GameStart';
 
 interface GameProps {
     gameQuit: () => void,
     gameCompleted: () => void
 }
 
-interface GameState {
-    name: string,
-    status: GameStatus
-}
+const Game: FC<GameProps> = ({gameQuit, gameCompleted}: GameProps) => {
 
-enum GameStatus {
-    NotStarted,
-    InProgress,
-    Finished
-}
+    const gameService = useMemo(() => new GameService(), []);
 
-class Game extends React.Component<GameProps, GameState>
-{
-    constructor(props: GameProps) {
-        super(props);
+    const [status, setStatus] = useState(GameStatus.NotStarted);
 
-        this.state = {
-            name: 'Charlie',
-            status: GameStatus.NotStarted
-        };
+    gameService.status.subscribe(gsStatus => {
+        if (gsStatus !== status) {
+            setStatus(gsStatus);
+        }
+    });
+
+    useEffect(() => {
+        if (status === GameStatus.Quit) {
+            gameQuit();
+        }
+        if (status === GameStatus.Completed) {
+            gameCompleted();
+        }
+    }, [status, gameQuit, gameCompleted])
+
+    function startGame(name: string) {
+        if (status === GameStatus.NotStarted) {
+            gameService.startGame([name]);
+        }
     }
 
-    isGameInStatus(gameStatus: GameStatus): boolean {
-        return this.state.status === gameStatus;
-    }
+    let gameComponent: ReactElement;
 
-    startGame(name: string): void {
-        this.setState({
-            name: name,
-            status: GameStatus.InProgress
-        });
-    }
-
-    onQuit() {
-        this.setState({
-            name: this.state.name,
-            status: GameStatus.Finished
-        }, () => this.props.gameQuit());
-    }
-
-    render() {
-        let gameComponent: ReactElement;
-
-        switch (this.state.status) {
-                // gameComponent = <GameStart defaultName='Charlie' onStarted={name => this.startGame(name)} />
-                // break;
+        switch (status) {
             case GameStatus.NotStarted:
-            case GameStatus.InProgress:
-                gameComponent = <GamePlay name={this.state.name} />
+                gameComponent = <GameStart defaultName='Charlie' onStarted={name => startGame(name)}/>
                 break;
-            case GameStatus.Finished:
+            case GameStatus.InProgress:
+                gameComponent = <GamePlay gameService={gameService}/>
+                break;
+            case GameStatus.Quit:
+            case GameStatus.Completed:
             default:
                 gameComponent = <p>Invalid Game State</p>
                 break;
@@ -65,7 +54,7 @@ class Game extends React.Component<GameProps, GameState>
         return (
             <div>{gameComponent}</div>
         )
-    }
+
 }
 
 export default Game;

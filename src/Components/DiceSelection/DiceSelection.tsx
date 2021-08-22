@@ -1,6 +1,7 @@
-import React from "react";
+import { FC, useEffect, useRef, useState } from "react";
 import DieComponent from "../DieComponent/DieComponent";
 import Hand from '../../Services/Hand';
+import { arraysEqual } from "../../Services/Utils";
 
 interface DiceSelectionProps {
     currentHand: Hand;
@@ -9,81 +10,54 @@ interface DiceSelectionProps {
     onDiceSelectionChanged: (selectedDiceIndicies: number[]) => void;
 }
 
-interface DiceSelectionState {
-    selectedDice: {[dieIndex: number]: boolean}
-}
+const DiceSelection: FC<DiceSelectionProps> = ({currentHand, canSelectDice, selectedDiceIndicies: propsSelectedDice, onDiceSelectionChanged}: DiceSelectionProps) => {
+    const tempSelectedDice: {[dieIndex: number]: boolean} = {};
+    propsSelectedDice.forEach(x => {
+        tempSelectedDice[x] = true;
+    })
+    const [selectedDice, setSelectedDice] = useState(tempSelectedDice);
 
-class DiceSelection extends React.Component<DiceSelectionProps, DiceSelectionState>
-{
-    constructor(props: DiceSelectionProps) {
-        super(props);
+    const prevSelectedDiceRef = useRef<number[]>(propsSelectedDice);
+    const prevSelectedDice = prevSelectedDiceRef.current;
 
-        this.state = {
-            selectedDice: {}
-        };
+    if (!arraysEqual(prevSelectedDice, propsSelectedDice) && !arraysEqual(propsSelectedDice, getSelectedDiceIndicies(selectedDice))) {
+        setSelectedDice(tempSelectedDice);
     }
 
-    componentDidUpdate(prevProps: DiceSelectionProps) {
-        if (this.arraysEqual(prevProps.selectedDiceIndicies, this.props.selectedDiceIndicies))
+    useEffect(() => {
+        prevSelectedDiceRef.current = propsSelectedDice;
+    });
+
+    useEffect(() => {
+        onDiceSelectionChanged(getSelectedDiceIndicies(selectedDice));
+    }, [selectedDice, onDiceSelectionChanged])
+
+    function getSelectedDiceIndicies(value: {[index: number]: boolean}): number[] {
+        const indicies = Object.keys(value).map(indexStr => parseInt(indexStr));
+        return indicies.filter(index => value[index]);
+    }
+
+    function onDieSelectionChanged(dieIndex: number, selection: boolean) {
+        if (selection === selectedDice[dieIndex])
             return;
-        const selectedDice: {[index: number]: boolean} = {};
 
-        this.props.selectedDiceIndicies.forEach(index => {
-            selectedDice[index] = true;
-        });
-
-        this.setState({
-            selectedDice: selectedDice
+        setSelectedDice({
+            ...selectedDice,
+            [dieIndex]: selection
         });
     }
 
-    arraysEqual(a: number[], b: number[]) {
-        if (a === b) return true;
-        if (a == null || b == null) return false;
-        if (a.length !== b.length) return false;
-      
-        // If you don't care about the order of the elements inside
-        // the array, you should sort both arrays here.
-        // Please note that calling sort on an array will modify that array.
-        // you might want to clone your array first.
-
-        a = [...a].sort();
-        b = [...b].sort();
-      
-        for (var i = 0; i < a.length; ++i) {
-          if (a[i] !== b[i]) return false;
-        }
-        return true;
-      }
-
-    private getSelectedDiceIndicies(): number[] {
-        const indicies = Object.keys(this.state.selectedDice).map(indexStr => parseInt(indexStr));
-        return indicies.filter(index => this.state.selectedDice[index]);
-    }
-
-    onDieSelectionChanged(dieIndex: number, selection: boolean) {
-        this.setState({
-            selectedDice: {
-                ...this.state.selectedDice,
-                [dieIndex]: selection
+    return (
+        <div>
+            {
+                currentHand.getDice().map((die, index) => <DieComponent
+                    selected={selectedDice[index] ?? false}
+                    onSelectionChanged={selection => onDieSelectionChanged(index, selection)}
+                    canSelectDie={canSelectDice} value={die.getCurrentFace()}
+                    key={index}/>)
             }
-        }, () => {
-            this.props.onDiceSelectionChanged(this.getSelectedDiceIndicies());
-        });
-    }
-
-    render() {
-        return (
-            <div>
-                {
-                    this.props.currentHand.getDice().map((die, index) => <DieComponent
-                        onSelectionChanged={selection => this.onDieSelectionChanged(index, selection)}
-                        canSelectDie={this.props.canSelectDice} value={die.getCurrentFace()}
-                        key={index}/>)
-                }
-            </div>
-        )
-    }
-}
+        </div>
+    )
+};
 
 export default DiceSelection;

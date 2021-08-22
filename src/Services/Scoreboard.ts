@@ -2,11 +2,18 @@ import Hand from "./Hand";
 import { RuleSet } from "./RuleSet";
 import Rule, { RuleSection } from "./Rule";
 import { RuleKey, RuleScore } from './Rule';
+import { arraysEqual } from "./Utils";
 
 export interface RoundOutcome {
     rule: Rule,
     hand?: Hand,
     overriddenScore?: number
+}
+
+function roundOutcomesEqual(a: RoundOutcome, b: RoundOutcome): boolean {
+    return a.rule.key === b.rule.key
+        && a.overriddenScore === b.overriddenScore
+        && (a.hand?.equals(b.hand) ?? false);
 }
 
 class RuleNotFoundError extends Error
@@ -98,8 +105,6 @@ export default class Scoreboard {
             return applicableRule;
         });
 
-        yahtzee bonus can be applied as many times as possible
-
         if (applicableLowerSectionRules.length > 0)
             return applicableLowerSectionRules;
         
@@ -139,6 +144,10 @@ export default class Scoreboard {
             throw new RuleNotFoundError();
         
         return rule;
+    }
+
+    equals(other: Scoreboard): boolean {
+        return arraysEqual(this.roundOutcomes, other.roundOutcomes, undefined, roundOutcomesEqual, true);
     }
 }
 

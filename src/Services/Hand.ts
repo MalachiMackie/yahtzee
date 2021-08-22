@@ -1,4 +1,5 @@
 import { Die } from "./Die";
+import { arraysEqual } from "./Utils";
 
 export class TooManyDiceForHandError extends Error {
 
@@ -42,5 +43,9 @@ export default class Hand {
 
     getDice(): Die[] {
         return this.dice;
+    }
+
+    equals(other?: Hand): boolean {
+        return !!other && arraysEqual(other.dice.map(x => x.getCurrentFace()), this.dice.map(x => x.getCurrentFace()), undefined, undefined, false);
     }
 }

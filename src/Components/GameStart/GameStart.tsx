@@ -1,48 +1,29 @@
 import './GameStart.css'
-import React, { ChangeEvent, FormEvent } from "react";
+import { FC, FormEvent, useState } from "react";
 
 interface GameStartProps {
     onStarted: (name: string) => void,
     defaultName: string
 }
 
-interface GameStartState {
-    name: string
-}
+const GameStart: FC<GameStartProps> = ({onStarted, defaultName}) => {
+    const [name, setName] = useState(defaultName);
 
-class GameStart extends React.Component<GameStartProps, GameStartState> {
-
-    constructor(props: GameStartProps) {
-        super(props);
-
-        this.state = {
-            name: this.props.defaultName
-        };
-        this.onStart = props.onStarted;
+    const onNameChanged = (updatedName: string) => {
+        setName(updatedName);
     }
 
-    onStart: (name: string) => void;
-
-    onNameChanged(event: ChangeEvent<HTMLInputElement>): void {
-        this.setState({
-            name: event.target.value
-        });
-    }
-
-    onSubmit(event: FormEvent<HTMLFormElement>) {
+    const onSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-
-        this.onStart(this.state.name);
+        onStarted(name);
     }
 
-    render() {
-        return (
-            <form className='StartForm' onSubmit={(event) => this.onSubmit(event)}>
-                <input type='text' value={this.state.name} onChange={evnt => this.onNameChanged(evnt)}/>
-                <button type='submit'>Start Game</button>
-            </form>
-        )
-    }
+    return (
+        <form className='StartForm' onSubmit={(event) => onSubmit(event)}>
+            <input type='text' value={name} onChange={evnt => onNameChanged(evnt.target.value)}/>
+            <button type='submit'>Start Game</button>
+        </form>
+    )
 }
 
 export default GameStart

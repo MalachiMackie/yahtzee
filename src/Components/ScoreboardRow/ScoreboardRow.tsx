@@ -1,5 +1,5 @@
 import './ScoreboardRow.css'
-import React, { ChangeEvent, ReactElement } from "react";
+import React, { ChangeEvent, FC, ReactElement } from "react";
 
 interface Props {
     isSelected?: boolean;
@@ -9,29 +9,27 @@ interface Props {
     right: ReactElement;
 }
 
-export default class ScoreboardRow extends React.Component<Props> {
-
-    onInputChanged(event: ChangeEvent<HTMLInputElement>) {
-        if (!this.props.canSelect || !this.props.onSelectionChanged) {
-            return;
+const ScoreboardRow: FC<Props> = ({isSelected, canSelect, onSelectionChanged, left, right}) => {
+    const onInputChanged = (event: ChangeEvent<HTMLInputElement>) => {
+        if (canSelect && !!onSelectionChanged) {
+            onSelectionChanged(event.target.checked);
         }
-
-        this.props.onSelectionChanged(event.target.checked);
     }
 
-    render() {
-        const input = <input hidden={!this.props.canSelect} type='checkbox' checked={this.props.isSelected} onChange={(event) => this.onInputChanged(event)} />;
+    const input = <input hidden={!canSelect} type='checkbox' checked={isSelected} onChange={(event) => onInputChanged(event)} />;
 
-        return (
-            <div className='ScoreboardRowRoot'>
-                <div className='Left'>
-                    {input}
-                    <div className={this.props.canSelect ? 'HasInput' : 'HasNoInput'}>
-                        {this.props.left}
-                    </div>
+    return (
+        <div className='ScoreboardRowRoot'>
+            <div className='Left'>
+                {input}
+                <div className={canSelect ? 'HasInput' : 'HasNoInput'}>
+                    {left}
                 </div>
-                <div className='Right'>{this.props.right}</div>
             </div>
-        );
-    }
+            <div className='Right'>{right}</div>
+        </div>
+    );
+
 }
+
+export default ScoreboardRow;
