@@ -52,7 +52,7 @@ export default class Scoreboard {
     }
 
     private isRuleAvailable(rule: Rule): boolean {
-        return this.roundOutcomes.every(outcome => outcome.rule.key !== rule.key);
+        return rule.key === RuleKey.YahtzeeBonus || this.roundOutcomes.every(outcome => outcome.rule.key !== rule.key);
     }
 
     getRoundOutcomes(): RoundOutcome[] {
@@ -114,7 +114,7 @@ export default class Scoreboard {
     private getRoundOutcomeForYahtzeeBonusRule(rule: Rule, hand: Hand): RoundOutcome {
         const roundOutcome: RoundOutcome = {
             rule: rule,
-            hand: hand
+            hand: hand,
         };
         if (Scoreboard.yahtzeeBonusRulesToSum.some(x => x === rule.key)) {
             roundOutcome.overriddenScore = this.ruleSet.sumHand(hand);
@@ -133,8 +133,16 @@ export default class Scoreboard {
         if (!rule)
             throw new RuleNotFoundError();
 
-        this.roundOutcomes.push({hand: hand, rule: yahtzeeBonusRule});
+            
         this.roundOutcomes.push(this.getRoundOutcomeForYahtzeeBonusRule(rule, hand));
+        let existingBonusOutcome = this.roundOutcomes.find(x => x.rule.key === RuleKey.YahtzeeBonus);
+        if (!!existingBonusOutcome && !!existingBonusOutcome.overriddenScore)
+        {
+            existingBonusOutcome.overriddenScore += yahtzeeBonusRule.getScore(this, hand);
+            return;
+        }
+
+        this.roundOutcomes.push({hand: hand, rule: yahtzeeBonusRule, overriddenScore: yahtzeeBonusRule.getScore(this, hand)});
     }
 
     private getRule(ruleKey: RuleKey) : Rule

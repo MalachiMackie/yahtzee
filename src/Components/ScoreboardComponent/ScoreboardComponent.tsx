@@ -78,11 +78,30 @@ const ScoreboardComponent: FC<Props> = ({gameService, onSelectedRulesChanged}) =
             if (rollCount === 0 && scoreboardRule.isPotentialScore) {
                 scoreboardRule.score = 0;
             }
-            rules.push(scoreboardRule);
+
+            if (rule.key !== RuleKey.YahtzeeBonus)
+            {
+                rules.push(scoreboardRule);
+                continue;
+            }
+
+            if (roundOutcomes.every(x => x.rule.key !== RuleKey.YahtzeeBonus))
+            {
+                rules.push(scoreboardRule);
+            }
         }
 
         roundOutcomes.forEach(roundOutcome => {
-            rules.push({rule: roundOutcome.rule, score: roundOutcome.rule.getScoreIfApplicable(scoreboard, roundOutcome.hand), isPotentialScore: false, canSelect: false})
+            let score = roundOutcome.rule.getScoreIfApplicable(scoreboard, roundOutcome.hand);
+            let isPotentialScore = false;
+            let canSelect = false;
+
+            if (roundOutcome.rule.key === RuleKey.YahtzeeBonus) {
+                score = roundOutcome.overriddenScore ?? 0;
+                isPotentialScore = true;
+                canSelect = rollCount > 0 && roundOutcome.rule.isApplicable(scoreboard, currentHand);
+            }
+            rules.push({rule: roundOutcome.rule, score: score, isPotentialScore: isPotentialScore, canSelect: canSelect})
         });
 
         rules = rules.sort(sortRulesByKey);
@@ -114,7 +133,7 @@ const ScoreboardComponent: FC<Props> = ({gameService, onSelectedRulesChanged}) =
 
     const getRuleComponentFromRule = (scoreboardRule: ScoreboardRule): ReactElement => {
         const isSelected = !selectedRules ? false : selectedRules.some(x => x.key === scoreboardRule.rule.key);
-        return (<ScoreboardRuleComponent key={scoreboardRule.rule.key} onRuleSelectionChanged={isSelected => onRuleSelectionChanged(scoreboardRule.rule, isSelected)} scoreboardRule={scoreboardRule} isSelected={isSelected} />)
+        return (<ScoreboardRuleComponent currentHand={currentHand} scoreboard={scoreboard} key={scoreboardRule.rule.key} onRuleSelectionChanged={isSelected => onRuleSelectionChanged(scoreboardRule.rule, isSelected)} scoreboardRule={scoreboardRule} isSelected={isSelected} />)
     }
 
     const getScoreboardRuleScore = (scoreboardRule: ScoreboardRule): number => {

@@ -48,7 +48,8 @@ const GamePlay: FC<GamePlayProps> = ({gameService}: GamePlayProps) => {
                 diceToRoll.push(i);
             }
         }
-        gameService.rollDice(diceToRoll);
+        if (selectedDiceIndicies.length !== dice.length || rollCount === 0)
+            gameService.rollDice(diceToRoll);
     }
 
     function keepDice() {
@@ -90,7 +91,7 @@ const GamePlay: FC<GamePlayProps> = ({gameService}: GamePlayProps) => {
                 {diceSelection}
             </div>
             <div className='Scoreboard'>
-                <ScoreboardComponent gameService={gameService} onSelectedRulesChanged={selectedRules => setSelectedRules(selectedRules)} />wzvu
+                <ScoreboardComponent gameService={gameService} onSelectedRulesChanged={selectedRules => setSelectedRules(selectedRules)} />
                 <div className='RollCount'>RollCount: {rollCount}</div>
             </div>
         </div>
